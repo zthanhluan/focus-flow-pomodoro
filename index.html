@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow | Student Pomodoro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo">FocusFlow</div>
+            <button id="stats-btn" class="icon-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-4"></path></svg>
+                Stats
+            </button>
+        </header>
+
+        <main>
+            <section class="timer-section">
+                <div id="status-label" class="status-badge">Focus Time</div>
+                <div id="timer-display" class="timer">25:00</div>
+                <div class="timer-controls">
+                    <button id="start-btn" class="primary-btn">Start Focus</button>
+                    <button id="reset-btn" class="secondary-btn">Reset</button>
+                </div>
+            </section>
+
+            <section class="tasks-section">
+                <h3>My Tasks</h3>
+                <div class="task-input-wrapper">
+                    <input type="text" id="task-input" placeholder="What are we studying?">
+                    <button id="add-task-btn" class="add-btn">+</button>
+                </div>
+                <ul id="task-list" class="task-list">
+                    <!-- Tasks will be injected here -->
+                </ul>
+            </section>
+        </main>
+
+        <!-- Modal for Email Sign-up -->
+        <div id="modal-overlay" class="modal-overlay hidden">
+            <div class="modal-content">
+                <button id="close-modal" class="close-btn">&times;</button>
+                <div class="modal-header">
+                    <span class="emoji">📊</span>
+                    <h2>Unlock Detailed Statistics</h2>
+                </div>
+                <p>Want to see your study patterns, daily streaks, and total focus hours? Sign up with your email to save your progress forever.</p>
+                <form id="subscribe-form">
+                    <input type="email" id="subscriber-email" placeholder="Enter your student email" required>
+                    <button type="submit" class="submit-btn">Unlock My Stats</button>
+                </form>
+                <div id="share-container" class="hidden">
+                    <div class="share-options">
+                        <button id="share-whatsapp" class="share-btn whatsapp">Share on WhatsApp</button>
+                        <button id="share-twitter" class="share-btn twitter">Share on X (Twitter)</button>
+                    </div>
+                </div>
+                <p id="form-message" class="form-message"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
