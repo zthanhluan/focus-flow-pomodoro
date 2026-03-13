@@ -21,8 +21,18 @@
 
         <main>
             <section class="timer-section">
+                <div class="timer-settings">
+                    <div class="setting">
+                        <label for="focus-input">Focus</label>
+                        <input type="number" id="focus-input" value="53" min="1">
+                    </div>
+                    <div class="setting">
+                        <label for="break-input">Break</label>
+                        <input type="number" id="break-input" value="7" min="1">
+                    </div>
+                </div>
                 <div id="status-label" class="status-badge">Focus Time</div>
-                <div id="timer-display" class="timer">25:00</div>
+                <div id="timer-display" class="timer">53:00</div>
                 <div class="timer-controls">
                     <button id="start-btn" class="primary-btn">Start Focus</button>
                     <button id="reset-btn" class="secondary-btn">Reset</button>

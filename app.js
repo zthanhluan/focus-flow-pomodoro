@@ -1,9 +1,9 @@
-// --- Constants ---
-const FOCUS_TIME = 1 * 60;
-const BREAK_TIME = 1 * 60;
+// --- Constants (Now dynamic based on inputs) ---
+const getFocusTime = () => (parseInt(document.getElementById('focus-input').value) || 53) * 60;
+const getBreakTime = () => (parseInt(document.getElementById('break-input').value) || 7) * 60;
 
 // --- State ---
-let timeLeft = FOCUS_TIME;
+let timeLeft = getFocusTime();
 let timerId = null;
 let isFocus = true;
 let tasks = JSON.parse(localStorage.getItem('focusflow_tasks')) || [];
@@ -26,6 +26,8 @@ const twitterBtn = document.getElementById('share-twitter');
 const taskInput = document.getElementById('task-input');
 const addTaskBtn = document.getElementById('add-task-btn');
 const taskList = document.getElementById('task-list');
+const focusInput = document.getElementById('focus-input');
+const breakInput = document.getElementById('break-input');
 
 // --- Viral Share Config ---
 const SHARE_MESSAGE = "Just finished a focus session on FocusFlow! 🚀 Crushing my goals today. Join my study streak here: " + window.location.href;
@@ -98,7 +100,7 @@ function triggerConfetti() {
 
 function switchMode() {
     isFocus = !isFocus;
-    timeLeft = isFocus ? FOCUS_TIME : BREAK_TIME;
+    timeLeft = isFocus ? getFocusTime() : getBreakTime();
     statusLabel.textContent = isFocus ? 'Focus Time' : 'Break Time';
     
     // UI Polish
@@ -130,11 +132,15 @@ function startTimer() {
         timerId = null;
         startBtn.textContent = isFocus ? 'Start Focus' : 'Start Break';
         document.body.classList.remove('focus-mode');
+        focusInput.disabled = false;
+        breakInput.disabled = false;
         return;
     }
 
     startBtn.textContent = 'Pause';
     if (isFocus) document.body.classList.add('focus-mode'); 
+    focusInput.disabled = true;
+    breakInput.disabled = true;
     
     timerId = setInterval(() => {
         timeLeft--;
@@ -151,10 +157,19 @@ function startTimer() {
 function resetTimer() {
     clearInterval(timerId);
     timerId = null;
-    timeLeft = isFocus ? FOCUS_TIME : BREAK_TIME;
+    timeLeft = isFocus ? getFocusTime() : getBreakTime();
     startBtn.textContent = isFocus ? 'Start Focus' : 'Start Break';
     document.body.classList.remove('focus-mode');
+    focusInput.disabled = false;
+    breakInput.disabled = false;
     updateDisplay();
+}
+
+function handleSettingChange() {
+    if (!timerId) {
+        timeLeft = isFocus ? getFocusTime() : getBreakTime();
+        updateDisplay();
+    }
 }
 
 // --- API Integration ---
@@ -202,6 +217,8 @@ function shareOnTwitter() {
 // --- Event Listeners ---
 startBtn.addEventListener('click', startTimer);
 resetBtn.addEventListener('click', resetTimer);
+focusInput.addEventListener('input', handleSettingChange);
+breakInput.addEventListener('input', handleSettingChange);
 statsBtn.addEventListener('click', () => {
     modal.classList.remove('hidden');
     if (!isSynced) {

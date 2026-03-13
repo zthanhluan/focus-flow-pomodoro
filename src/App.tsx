@@ -2,11 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import confetti from 'canvas-confetti'
 import './App.css'
 
-const FOCUS_TIME = 1 * 60;
-const BREAK_TIME = 1 * 60;
-
 function App() {
-  const [timeLeft, setTimeLeft] = useState(FOCUS_TIME);
+  const [focusMinutes, setFocusMinutes] = useState(53);
+  const [breakMinutes, setBreakMinutes] = useState(7);
+  const [timeLeft, setTimeLeft] = useState(focusMinutes * 60);
   const [isActive, setIsActive] = useState(false);
   const [isFocus, setIsFocus] = useState(true);
 
@@ -34,14 +33,12 @@ function App() {
     setIsActive(false);
     if (isFocus) {
       triggerConfetti();
-      // In a real app, we'd play a sound here too
       console.log('Focus session complete! 🎉');
     }
-    // Toggle between focus and break
     const nextIsFocus = !isFocus;
     setIsFocus(nextIsFocus);
-    setTimeLeft(nextIsFocus ? FOCUS_TIME : BREAK_TIME);
-  }, [isFocus]);
+    setTimeLeft(nextIsFocus ? focusMinutes * 60 : breakMinutes * 60);
+  }, [isFocus, focusMinutes, breakMinutes]);
 
   useEffect(() => {
     let interval: any = null;
@@ -59,7 +56,23 @@ function App() {
 
   const resetTimer = () => {
     setIsActive(false);
-    setTimeLeft(isFocus ? FOCUS_TIME : BREAK_TIME);
+    setTimeLeft(isFocus ? focusMinutes * 60 : breakMinutes * 60);
+  };
+
+  const handleFocusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseInt(e.target.value) || 0;
+    setFocusMinutes(val);
+    if (!isActive && isFocus) {
+      setTimeLeft(val * 60);
+    }
+  };
+
+  const handleBreakChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseInt(e.target.value) || 0;
+    setBreakMinutes(val);
+    if (!isActive && !isFocus) {
+      setTimeLeft(val * 60);
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -70,6 +83,28 @@ function App() {
 
   return (
     <div className="container">
+      <div className="settings">
+        <div className="setting-item">
+          <label>Focus (min)</label>
+          <input 
+            type="number" 
+            value={focusMinutes} 
+            onChange={handleFocusChange}
+            min="1"
+            disabled={isActive}
+          />
+        </div>
+        <div className="setting-item">
+          <label>Break (min)</label>
+          <input 
+            type="number" 
+            value={breakMinutes} 
+            onChange={handleBreakChange}
+            min="1"
+            disabled={isActive}
+          />
+        </div>
+      </div>
       <div className="status">
         {isFocus ? '🚀 Focus Time' : '☕ Break Time'}
       </div>
@@ -78,14 +113,13 @@ function App() {
       </div>
       <div className="controls">
         <button onClick={toggleTimer}>
-          {isActive ? 'Pause' : 'Start Focus'}
+          {isActive ? 'Pause' : (isFocus ? 'Start Focus' : 'Start Break')}
         </button>
         <button className="secondary" onClick={resetTimer}>
           Reset
         </button>
       </div>
-      {/* Visual nudge hint for Day 5 */}
-      {!isActive && isFocus && timeLeft === FOCUS_TIME && (
+      {!isActive && isFocus && timeLeft === focusMinutes * 60 && (
         <p style={{ marginTop: '2rem', fontSize: '0.8rem', color: '#aaa', fontStyle: 'italic' }}>
           "Focus is the art of saying no."
         </p>
