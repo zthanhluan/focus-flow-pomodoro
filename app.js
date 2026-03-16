@@ -10,6 +10,20 @@ let tasks = JSON.parse(localStorage.getItem('focusflow_tasks')) || [];
 let activeTaskId = localStorage.getItem('focusflow_active_task') || null;
 let isSynced = localStorage.getItem('focusflow_synced') === 'true';
 
+// Gamification State
+let totalFocusMinutes = parseInt(localStorage.getItem('focusflow_total_mins')) || 0;
+let streak = parseInt(localStorage.getItem('focusflow_streak')) || 0;
+let lastFocusDate = localStorage.getItem('focusflow_last_date') || null; // YYYY-MM-DD
+
+const RANKS = [
+    { name: 'Novice', min: 0 },
+    { name: 'Student', min: 60 },
+    { name: 'Scholar', min: 300 },
+    { name: 'Expert', min: 1200 },
+    { name: 'Master', min: 3000 },
+    { name: 'Zen Sage', min: 6000 }
+];
+
 // Default Links
 const DEFAULT_FOCUS_MUSIC = 'https://www.youtube.com/watch?v=_4kHxtiuML0'; // New Focus Music
 const DEFAULT_BREAK_MUSIC = 'https://www.youtube.com/watch?v=m8PILb6pHqw'; // Relaxing Nature
@@ -18,6 +32,7 @@ const DEFAULT_BG_IMAGE = 'https://images.unsplash.com/photo-1499750310107-5fef28
 let focusMusicUrl = localStorage.getItem('focusflow_focus_music') || DEFAULT_FOCUS_MUSIC;
 let breakMusicUrl = localStorage.getItem('focusflow_break_music') || DEFAULT_BREAK_MUSIC;
 let bgUrl = localStorage.getItem('focusflow_bg_url') || DEFAULT_BG_IMAGE;
+let isDarkMode = localStorage.getItem('focusflow_dark_mode') === 'true';
 let player = null;
 let apiReady = false;
 
@@ -27,6 +42,13 @@ const statusLabel = document.getElementById('status-label');
 const startBtn = document.getElementById('start-btn');
 const resetBtn = document.getElementById('reset-btn');
 const statsBtn = document.getElementById('stats-btn');
+const themeToggle = document.getElementById('theme-toggle');
+const moonIcon = document.getElementById('moon-icon');
+const sunIcon = document.getElementById('sun-icon');
+const streakCountEl = document.getElementById('streak-count');
+const rankNameEl = document.getElementById('rank-name');
+const rankBadgeEl = document.getElementById('rank-badge');
+const notifSound = document.getElementById('notif-sound');
 const modal = document.getElementById('modal-overlay');
 const closeModal = document.getElementById('close-modal');
 const subscribeForm = document.getElementById('subscribe-form');
@@ -47,6 +69,25 @@ const presetBtnsContainer = document.querySelector('.timer-presets');
 const presetBtns = document.querySelectorAll('.preset-btn');
 const playerWrapper = document.getElementById('player-wrapper');
 
+// --- Theme Logic ---
+function applyTheme() {
+    if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+        moonIcon.classList.add('hidden');
+        sunIcon.classList.remove('hidden');
+    } else {
+        document.body.classList.remove('dark-mode');
+        moonIcon.classList.remove('hidden');
+        sunIcon.classList.add('hidden');
+    }
+    localStorage.setItem('focusflow_dark_mode', isDarkMode);
+}
+
+function toggleTheme() {
+    isDarkMode = !isDarkMode;
+    applyTheme();
+}
+
 // --- Debug Preset for Localhost ---
 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     const debugBtn = document.createElement('button');
@@ -58,6 +99,57 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
     debugBtn.style.color = '#3B82F6';
     debugBtn.addEventListener('click', handlePresetClick);
     presetBtnsContainer.appendChild(debugBtn);
+}
+
+// --- Gamification Logic ---
+function getRank(mins) {
+    return [...RANKS].reverse().find(r => mins >= r.min) || RANKS[0];
+}
+
+function updateGamificationUI() {
+    if (streakCountEl) streakCountEl.textContent = streak;
+    const currentRank = getRank(totalFocusMinutes);
+    if (rankNameEl) {
+        const oldRankName = rankNameEl.textContent;
+        rankNameEl.textContent = currentRank.name;
+
+        if (oldRankName && oldRankName !== currentRank.name && oldRankName !== 'Novice') {
+            if (rankBadgeEl) {
+                rankBadgeEl.classList.add('level-up');
+                triggerConfetti();
+                setTimeout(() => rankBadgeEl.classList.remove('level-up'), 2000);
+            }
+        }
+    }
+}
+
+function updateStatsOnFocusComplete() {
+    const today = new Date().toISOString().split('T')[0];
+    const minsFocused = Math.round(getFocusTime() / 60);
+    totalFocusMinutes += minsFocused;
+
+    // Streak Logic
+    if (lastFocusDate) {
+        const last = new Date(lastFocusDate);
+        const current = new Date(today);
+        const diffTime = Math.abs(current - last);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+            streak++;
+        } else if (diffDays > 1) {
+            streak = 1;
+        }
+    } else {
+        streak = 1;
+    }
+
+    lastFocusDate = today;
+    saveTasks();
+    updateGamificationUI();
+    
+    // Play sound
+    if (notifSound) notifSound.play().catch(() => {});
 }
 
 // --- Background Function ---
@@ -194,6 +286,9 @@ function saveTasks() {
     localStorage.setItem('focusflow_focus_music', focusMusicUrl);
     localStorage.setItem('focusflow_break_music', breakMusicUrl);
     localStorage.setItem('focusflow_bg_url', bgUrl);
+    localStorage.setItem('focusflow_total_mins', totalFocusMinutes);
+    localStorage.setItem('focusflow_streak', streak);
+    localStorage.setItem('focusflow_last_date', lastFocusDate);
 }
 
 function renderTasks() {
@@ -267,6 +362,8 @@ function switchMode() {
     
     if (!isFocus) {
         triggerConfetti();
+        updateStatsOnFocusComplete(); // Gamification Update
+        
         if (activeTaskId) {
             const task = tasks.find(t => t.id === activeTaskId);
             if (task) task.pomoCount++;
@@ -366,7 +463,13 @@ async function handleSubscribe(e) {
         const response = await fetch('/api/subscribe', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, tasks })
+            body: JSON.stringify({ 
+                email, 
+                tasks, 
+                totalFocusMinutes, 
+                streak, 
+                lastFocusDate 
+            })
         });
 
         const data = await response.json();
@@ -400,6 +503,7 @@ function shareOnTwitter() {
 // --- Event Listeners ---
 startBtn.addEventListener('click', startTimer);
 resetBtn.addEventListener('click', resetTimer);
+themeToggle.addEventListener('click', toggleTheme);
 focusInput.addEventListener('input', () => { handleSettingChange(); updatePresetActiveState(); });
 breakInput.addEventListener('input', () => { handleSettingChange(); updatePresetActiveState(); });
 presetBtns.forEach(btn => btn.addEventListener('click', handlePresetClick));
@@ -444,8 +548,10 @@ if (isSynced) statsBtn.innerHTML = '<span style="color: #10B981">●</span> Clou
 focusMusicInput.value = focusMusicUrl;
 breakMusicInput.value = breakMusicUrl;
 bgUrlInput.value = bgUrl;
+applyTheme(); // Init Theme
 applyBackground();
 updatePresetActiveState();
+updateGamificationUI(); // Init Gamification
 renderTasks();
 updateDisplay();
 
