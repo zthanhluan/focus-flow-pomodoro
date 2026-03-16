@@ -17,21 +17,28 @@
 body {
   font-family: 'Inter', sans-serif;
   background: var(--bg);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   color: var(--text);
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  transition: background 0.5s ease;
 }
 
 .app-container {
   width: 90%;
   max-width: 450px;
-  background: white;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   padding: 2.5rem;
   border-radius: 24px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
   text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 header {
@@ -65,6 +72,39 @@ header {
 .icon-btn:hover {
   border-color: #CBD5E1;
   background: #F1F5F9;
+}
+
+.timer-presets {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.preset-btn {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preset-btn:hover {
+  background: white;
+  border-color: #CBD5E1;
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.preset-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(244, 63, 94, 0.2);
 }
 
 .status-badge {
@@ -129,6 +169,45 @@ header {
 .setting input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.music-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.music-url {
+  width: 100%;
+  align-items: flex-start !important;
+}
+
+.music-url label {
+  margin-bottom: 0.25rem;
+}
+
+.music-url input {
+  width: 100% !important;
+  text-align: left !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+.player-wrapper {
+  margin-top: 1.5rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  box-shadow: var(--shadow);
+}
+
+.player-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
 }
 
 .timer {
@@ -285,7 +364,65 @@ header {
   font-size: 1.5rem; cursor: pointer; color: #94A3B8;
 }
 
-.modal-header .emoji { font-size: 3rem; margin-bottom: 1rem; display: block; }
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.setting-group label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94A3B8;
+  letter-spacing: 0.05rem;
+}
+
+.setting-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+}
+
+.music-settings-modal h3, #sync-section h3 {
+  font-size: 0.875rem;
+  color: #64748B;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+}
+
+.reset-link-btn {
+  background: none;
+  border: none;
+  color: #94A3B8;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 0.5rem;
+  transition: color 0.2s;
+  display: block;
+  text-align: left;
+}
+
+.reset-link-btn:hover {
+  color: var(--primary);
+}
+
+.modal-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
+
+.modal-header .emoji { font-size: 3rem; margin-bottom: 0.5rem; display: block; }
 .modal-header h2 { margin-bottom: 1rem; font-weight: 700; color: var(--text); }
 .modal-content p { color: #64748B; line-height: 1.6; margin-bottom: 2rem; font-size: 0.95rem; }
 

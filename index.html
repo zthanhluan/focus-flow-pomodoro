@@ -31,11 +31,19 @@
                         <input type="number" id="break-input" value="7" min="1">
                     </div>
                 </div>
+                <div class="timer-presets">
+                    <button class="preset-btn" data-focus="25" data-break="5">25/5</button>
+                    <button class="preset-btn" data-focus="50" data-break="10">50/10</button>
+                    <button class="preset-btn" data-focus="52" data-break="17">52/17</button>
+                </div>
                 <div id="status-label" class="status-badge">Focus Time</div>
                 <div id="timer-display" class="timer">53:00</div>
                 <div class="timer-controls">
                     <button id="start-btn" class="primary-btn">Start Focus</button>
                     <button id="reset-btn" class="secondary-btn">Reset</button>
+                </div>
+                <div id="player-wrapper" class="player-wrapper hidden">
+                    <div id="player"></div>
                 </div>
             </section>
 
@@ -57,13 +65,33 @@
                 <button id="close-modal" class="close-btn">&times;</button>
                 <div class="modal-header">
                     <span class="emoji">📊</span>
-                    <h2>Unlock Detailed Statistics</h2>
+                    <h2>Study Session Settings</h2>
                 </div>
-                <p>Want to see your study patterns, daily streaks, and total focus hours? Sign up with your email to save your progress forever.</p>
-                <form id="subscribe-form">
-                    <input type="email" id="subscriber-email" placeholder="Enter your student email" required>
-                    <button type="submit" class="submit-btn">Unlock My Stats</button>
-                </form>
+                <div class="music-settings-modal">
+                    <h3>Environment Sounds</h3>
+                    <div class="setting-group">
+                        <label for="focus-music">Focus Music (YouTube)</label>
+                        <input type="text" id="focus-music" placeholder="https://www.youtube.com/watch?v=...">
+                    </div>
+                    <div class="setting-group">
+                        <label for="break-music">Break Music (YouTube)</label>
+                        <input type="text" id="break-music" placeholder="https://www.youtube.com/watch?v=...">
+                    </div>
+                    <div class="setting-group">
+                        <label for="bg-url">Background Image URL</label>
+                        <input type="text" id="bg-url" placeholder="https://images.unsplash.com/...">
+                    </div>
+                    <button id="reset-settings-btn" class="reset-link-btn">Reset to Default Settings</button>
+                </div>
+                <hr class="modal-divider">
+                <div id="sync-section">
+                    <h3>Cloud Sync</h3>
+                    <p>Want to see your study patterns, daily streaks, and total focus hours? Sign up with your email to save your progress forever.</p>
+                    <form id="subscribe-form">
+                        <input type="email" id="subscriber-email" placeholder="Enter your student email" required>
+                        <button type="submit" class="submit-btn">Unlock My Stats & Sync</button>
+                    </form>
+                </div>
                 <div id="share-container" class="hidden">
                     <div class="share-options">
                         <button id="share-whatsapp" class="share-btn whatsapp">Share on WhatsApp</button>

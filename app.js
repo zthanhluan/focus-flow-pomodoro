@@ -10,6 +10,17 @@ let tasks = JSON.parse(localStorage.getItem('focusflow_tasks')) || [];
 let activeTaskId = localStorage.getItem('focusflow_active_task') || null;
 let isSynced = localStorage.getItem('focusflow_synced') === 'true';
 
+// Default Links
+const DEFAULT_FOCUS_MUSIC = 'https://www.youtube.com/watch?v=_4kHxtiuML0'; // New Focus Music
+const DEFAULT_BREAK_MUSIC = 'https://www.youtube.com/watch?v=m8PILb6pHqw'; // Relaxing Nature
+const DEFAULT_BG_IMAGE = 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=1920';
+
+let focusMusicUrl = localStorage.getItem('focusflow_focus_music') || DEFAULT_FOCUS_MUSIC;
+let breakMusicUrl = localStorage.getItem('focusflow_break_music') || DEFAULT_BREAK_MUSIC;
+let bgUrl = localStorage.getItem('focusflow_bg_url') || DEFAULT_BG_IMAGE;
+let player = null;
+let apiReady = false;
+
 // --- Elements ---
 const timerDisplay = document.getElementById('timer-display');
 const statusLabel = document.getElementById('status-label');
@@ -28,15 +39,161 @@ const addTaskBtn = document.getElementById('add-task-btn');
 const taskList = document.getElementById('task-list');
 const focusInput = document.getElementById('focus-input');
 const breakInput = document.getElementById('break-input');
+const focusMusicInput = document.getElementById('focus-music');
+const breakMusicInput = document.getElementById('break-music');
+const bgUrlInput = document.getElementById('bg-url');
+const resetSettingsBtn = document.getElementById('reset-settings-btn');
+const presetBtnsContainer = document.querySelector('.timer-presets');
+const presetBtns = document.querySelectorAll('.preset-btn');
+const playerWrapper = document.getElementById('player-wrapper');
+
+// --- Debug Preset for Localhost ---
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    const debugBtn = document.createElement('button');
+    debugBtn.className = 'preset-btn debug-btn';
+    debugBtn.textContent = '🛠️ 1/1';
+    debugBtn.dataset.focus = '1';
+    debugBtn.dataset.break = '1';
+    debugBtn.style.borderColor = '#3B82F6';
+    debugBtn.style.color = '#3B82F6';
+    debugBtn.addEventListener('click', handlePresetClick);
+    presetBtnsContainer.appendChild(debugBtn);
+}
+
+// --- Background Function ---
+function applyBackground() {
+    if (bgUrl) {
+        document.body.style.backgroundImage = `url('${bgUrl}')`;
+        document.body.style.backgroundColor = 'transparent';
+    } else {
+        document.body.style.backgroundImage = 'none';
+        document.body.style.backgroundColor = isFocus ? '#F8FAFC' : '#F0FDF4';
+    }
+}
+
+function updatePresetActiveState() {
+    const focus = focusInput.value;
+    const breakVal = breakInput.value;
+    presetBtns.forEach(btn => {
+        if (btn.dataset.focus === focus && btn.dataset.break === breakVal) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function handlePresetClick(e) {
+    const focus = e.target.dataset.focus;
+    const breakVal = e.target.dataset.break;
+    
+    focusInput.value = focus;
+    breakInput.value = breakVal;
+    
+    // Reset to Focus Mode and stop any running timer
+    clearInterval(timerId);
+    timerId = null;
+    isFocus = true;
+    
+    timeLeft = getFocusTime();
+    startBtn.textContent = 'Start Focus';
+    statusLabel.textContent = 'Focus Time';
+    document.body.classList.remove('focus-mode');
+    focusInput.disabled = false;
+    breakInput.disabled = false;
+    
+    applyBackground();
+    statusLabel.style.background = '#FFE4E6';
+    statusLabel.style.color = '#F43F5E';
+    
+    if (player && player.stopVideo) {
+        player.stopVideo();
+        playerWrapper.classList.add('hidden');
+    }
+
+    updateDisplay();
+    updatePresetActiveState();
+}
+
+function resetSettings() {
+    focusMusicUrl = DEFAULT_FOCUS_MUSIC;
+    breakMusicUrl = DEFAULT_BREAK_MUSIC;
+    bgUrl = DEFAULT_BG_IMAGE;
+    
+    // Update inputs
+    focusMusicInput.value = focusMusicUrl;
+    breakMusicInput.value = breakMusicUrl;
+    bgUrlInput.value = bgUrl;
+    
+    // Apply changes
+    saveTasks();
+    applyBackground();
+    if (apiReady) playCurrentMusic();
+    
+    // Notify user
+    formMessage.textContent = 'Settings restored to defaults! ✨';
+    formMessage.className = 'form-message success';
+    setTimeout(() => {
+        if (formMessage.textContent === 'Settings restored to defaults! ✨') {
+            formMessage.textContent = '';
+        }
+    }, 3000);
+}
 
 // --- Viral Share Config ---
 const SHARE_MESSAGE = "Just finished a focus session on FocusFlow! 🚀 Crushing my goals today. Join my study streak here: " + window.location.href;
+
+// --- YouTube API ---
+function extractVideoId(url) {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
+
+const tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+const firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+window.onYouTubeIframeAPIReady = () => {
+    player = new YT.Player('player', {
+        height: '100%',
+        width: '100%',
+        playerVars: {
+            'autoplay': 0,
+            'controls': 1,
+            'modestbranding': 1,
+            'rel': 0
+        },
+        events: {
+            'onReady': () => { apiReady = true; }
+        }
+    });
+};
+
+function playCurrentMusic() {
+    if (!apiReady || !player) return;
+    const url = isFocus ? focusMusicUrl : breakMusicUrl;
+    const videoId = extractVideoId(url);
+    
+    if (videoId) {
+        player.loadVideoById(videoId);
+        playerWrapper.classList.remove('hidden');
+    } else {
+        player.stopVideo();
+        playerWrapper.classList.add('hidden');
+    }
+}
 
 // --- Task Functions ---
 function saveTasks() {
     localStorage.setItem('focusflow_tasks', JSON.stringify(tasks));
     localStorage.setItem('focusflow_active_task', activeTaskId);
     localStorage.setItem('focusflow_synced', isSynced);
+    localStorage.setItem('focusflow_focus_music', focusMusicUrl);
+    localStorage.setItem('focusflow_break_music', breakMusicUrl);
+    localStorage.setItem('focusflow_bg_url', bgUrl);
 }
 
 function renderTasks() {
@@ -104,7 +261,7 @@ function switchMode() {
     statusLabel.textContent = isFocus ? 'Focus Time' : 'Break Time';
     
     // UI Polish
-    document.body.style.backgroundColor = isFocus ? '#F8FAFC' : '#F0FDF4'; 
+    applyBackground();
     statusLabel.style.background = isFocus ? '#FFE4E6' : '#DCFCE7';
     statusLabel.style.color = isFocus ? '#F43F5E' : '#10B981';
     
@@ -124,6 +281,7 @@ function switchMode() {
     updateDisplay();
     // Automatically start the next session
     startTimer();
+    playCurrentMusic(); // Play music for the new mode
 }
 
 function startTimer() {
@@ -134,6 +292,9 @@ function startTimer() {
         document.body.classList.remove('focus-mode');
         focusInput.disabled = false;
         breakInput.disabled = false;
+        
+        // Pause music when timer is paused
+        if (player && player.pauseVideo) player.pauseVideo();
         return;
     }
 
@@ -141,6 +302,21 @@ function startTimer() {
     if (isFocus) document.body.classList.add('focus-mode'); 
     focusInput.disabled = true;
     breakInput.disabled = true;
+    
+    // Play music when timer starts
+    if (player && player.playVideo) {
+        const url = isFocus ? focusMusicUrl : breakMusicUrl;
+        const currentVideoId = extractVideoId(player.getVideoUrl());
+        const targetVideoId = extractVideoId(url);
+        
+        if (targetVideoId && currentVideoId !== targetVideoId) {
+            playCurrentMusic();
+        } else if (targetVideoId) {
+            player.playVideo();
+        }
+    } else {
+        playCurrentMusic();
+    }
     
     timerId = setInterval(() => {
         timeLeft--;
@@ -162,6 +338,13 @@ function resetTimer() {
     document.body.classList.remove('focus-mode');
     focusInput.disabled = false;
     breakInput.disabled = false;
+    
+    // Stop music on reset
+    if (player && player.stopVideo) {
+        player.stopVideo();
+        playerWrapper.classList.add('hidden');
+    }
+    
     updateDisplay();
 }
 
@@ -217,8 +400,25 @@ function shareOnTwitter() {
 // --- Event Listeners ---
 startBtn.addEventListener('click', startTimer);
 resetBtn.addEventListener('click', resetTimer);
-focusInput.addEventListener('input', handleSettingChange);
-breakInput.addEventListener('input', handleSettingChange);
+focusInput.addEventListener('input', () => { handleSettingChange(); updatePresetActiveState(); });
+breakInput.addEventListener('input', () => { handleSettingChange(); updatePresetActiveState(); });
+presetBtns.forEach(btn => btn.addEventListener('click', handlePresetClick));
+focusMusicInput.addEventListener('change', (e) => {
+    focusMusicUrl = e.target.value;
+    saveTasks();
+    if (isFocus) playCurrentMusic();
+});
+breakMusicInput.addEventListener('change', (e) => {
+    breakMusicUrl = e.target.value;
+    saveTasks();
+    if (!isFocus) playCurrentMusic();
+});
+bgUrlInput.addEventListener('change', (e) => {
+    bgUrl = e.target.value;
+    saveTasks();
+    applyBackground();
+});
+resetSettingsBtn.addEventListener('click', resetSettings);
 statsBtn.addEventListener('click', () => {
     modal.classList.remove('hidden');
     if (!isSynced) {
@@ -241,6 +441,18 @@ taskInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addTask()
 
 // Init
 if (isSynced) statsBtn.innerHTML = '<span style="color: #10B981">●</span> Cloud Sync';
+focusMusicInput.value = focusMusicUrl;
+breakMusicInput.value = breakMusicUrl;
+bgUrlInput.value = bgUrl;
+applyBackground();
+updatePresetActiveState();
 renderTasks();
 updateDisplay();
+
+// Check if we should show the player initially
+setTimeout(() => {
+    if (apiReady) playCurrentMusic();
+}, 1000);
+
 console.log('FocusFlow 2.1: Continuous Timer Enabled. 🚀');
+
