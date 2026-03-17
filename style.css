@@ -94,6 +94,17 @@ body.dark-mode .setting input, body.dark-mode #subscribe-form input, body.dark-m
   color: white;
 }
 
+body.dark-mode .add-btn {
+  background: var(--text);
+  color: black;
+  border: none;
+  width: 50px;
+  border-radius: var(--radius);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
 :root {
   --bg: #F8FAFC;
   --text: #1E293B;
